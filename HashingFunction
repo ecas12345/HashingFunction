@@ -1,0 +1,224 @@
+#include <iostream>
+using namespace std;
+
+class hashingtable
+{
+    int *htable;
+    int size;          // capacity
+    int numofelements; // how many have been used!   
+                       //need to be updated by insert and delete to keep track how many slots have been used
+
+public:
+    hashingtable(int);
+    ~hashingtable();
+    int hashingfunction(int);
+    void insert(int);  // we want to use exception later
+    void remove(int);
+    int search(int);
+    bool isfull();
+    bool isempty();
+    void whoami();
+    void fill(int);
+};
+
+void hashingtable::fill(int size)
+{
+    for (int i = 0; i < size; i++)
+    {
+        htable[i] = -1;
+    }
+}
+void hashingtable::whoami()
+{
+    for (int i = 0; i < size; i++)
+    {
+        cout << htable[i] << " , ";
+    }
+    cout << endl;
+}
+
+bool hashingtable::isfull()
+{
+    return numofelements == size;
+}
+bool hashingtable::isempty()
+{
+    return numofelements == 0;
+}
+
+
+hashingtable::hashingtable(int psize)
+{
+    size = psize;
+    numofelements = 0;
+
+    htable = new int[size];
+    for (int i = 0; i < size; i++)
+        htable[i] = -1; // indicating the slot is available.
+
+}
+
+hashingtable::~hashingtable()
+{
+    delete[] htable;
+}
+
+int hashingtable::hashingfunction(int key)
+{
+    int spot = key%size;
+    return spot;
+}
+
+int hashingtable::search(int key)
+{
+    if (isempty())
+    {
+        cout << "The array is empty" << endl;
+        return -1;
+    }// no need to search if no elements in the table. -1 indicating no hit.
+
+    int searchindex = hashingfunction(key);
+    if (htable[searchindex] == key)
+    {
+        cout << "The value you are searching for is in array spot, " << searchindex+1 << endl;
+        return searchindex;// can't be -1 for any index
+    }
+    else
+    {
+        // the home has been occupied by other keys.
+        // do linear probing
+        for (int i = 1; i <size; i++)
+        {
+            int openaddresspos = (searchindex + i) % size;
+            if (htable[openaddresspos] == key)
+            {
+                cout << "The value you are searching for is in array spot, " << openaddresspos+1 << endl;
+                return openaddresspos;
+            }
+                
+        }
+
+        //if you reach to this point, no hit
+        return -1;
+    }
+
+}
+
+void hashingtable::remove(int key)
+{
+    if (isempty())
+        return;
+
+    int pos = search(key);
+    if (pos != -1)
+    {
+        //THE KEY IS SAVED IN THE position indexed at Pos.
+        numofelements--;
+        htable[pos] = -1; // set to be available again.
+    }
+    else
+        cout << "Number doesn't exist in this hashing table." << endl;
+}
+
+void hashingtable::insert(int key)
+{
+
+    if (isfull())
+    {
+        cout << "array is full" << endl;
+        return;
+    }
+
+    numofelements++; // if not full, that means there will be a slot available
+
+    int homeindex = hashingfunction(key);
+
+    if (htable[homeindex] == -1)
+    {
+        htable[homeindex] = key;
+    }
+    else
+    {
+        // collision is detected,
+        // let us linear probing rehashing open addressing, closed hashing
+
+        for (int i = 1; i <size; i++)
+        {
+            int openaddresspos = (homeindex + i) % size;
+
+            if (htable[openaddresspos] == -1)
+            {
+                //means the slot is available
+                htable[openaddresspos] = key;
+                return;
+            }
+        }
+
+        // when you reach to this point, that means no spot available, but this is impossible.
+        // return anyway, implicit or explicit.
+        return;
+
+
+    }
+}
+
+int main()
+{
+
+
+    hashingtable *aht;
+    int sizeoftable;
+
+    cout << "Tell me the size of the hashing table." << endl;
+    cin >> sizeoftable;
+
+    aht = new hashingtable(sizeoftable);
+    aht->fill(sizeoftable);
+    char choice;
+
+    do
+    {
+        cout << "Please choose i, r, s, d, q for insert, remove, search, display and quit:";
+        cout << endl;
+        cin >> choice;
+        switch (choice)
+        {
+            case 'd':
+            {
+                aht->whoami();
+                break;
+
+            }
+            case 'i':
+            {
+                int insertedNum;
+                cout << "What number would you like to insert? " << endl;
+                cin >> insertedNum;
+                aht->insert(insertedNum);
+                cout << endl;
+                break;
+            }
+            case 'r':
+            {
+                int removeNum;
+                cout << "What number would you like to remove? " << endl;
+                cin >> removeNum;
+                aht->remove(removeNum);
+                cout << endl;
+                break;
+            }
+            case 's':
+            {
+                int searchedNum;
+                cout << "What number are you searching for? " << endl;
+                cin >> searchedNum;
+                cout << "Searching for " << searchedNum << endl;
+                aht->search(searchedNum);
+                cout << endl;    
+            }
+        }
+    } while (choice != 'q');
+
+    return 0;
+
+}
